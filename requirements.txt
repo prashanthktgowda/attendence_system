@@ -1,0 +1,10 @@
+streamlit
+qrcode
+geopy
+fpdf
+pillow
+pyzbar
+reportlab
+pybase64
+validators
+schedule
