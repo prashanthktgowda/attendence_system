@@ -38,7 +38,7 @@ def teacher_dashboard():
 
         if st.button("Generate QR Code"):
             session_id = str(uuid.uuid4())
-            qr_data = f"https://attendencesystem.streamlit.app//?session_id={session_id}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
+            qr_data = f"http://localhost:8501/?session_id={session_id}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
             
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
             qr.add_data(qr_data)
@@ -60,12 +60,12 @@ def teacher_dashboard():
             st.session_state.attendance_data = []
             st.rerun()
     
-    if st.button("View Attendance in Real-Time"):
-        if st.session_state.attendance_data:
-            df = pd.DataFrame(st.session_state.attendance_data)
-            st.write(df)
-        else:
-            st.write("No attendance data available.")
+    st.header("Real-Time Attendance Data")
+    if st.session_state.attendance_data:
+        df = pd.DataFrame(st.session_state.attendance_data)
+        st.dataframe(df)
+    else:
+        st.write("No attendance data available.")
 
 # Student Interface
 def student_interface():
@@ -91,6 +91,7 @@ def student_interface():
                     "USN": usn
                 })
                 st.success("Attendance Marked Successfully!")
+                st.rerun()
             else:
                 st.error("You have already marked attendance.")
     else:
