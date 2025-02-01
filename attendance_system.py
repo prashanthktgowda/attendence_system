@@ -50,7 +50,7 @@ def teacher_dashboard():
 
         if st.button("Generate QR Code"):
             session_code = f"{subject_name}_{datetime.now().strftime('%Y-%m-%d')}"
-            qr_data = fhttps://attendencesystem.streamlit.app//?session_code={session_code}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
+            qr_data = f"https://attendencesystem.streamlit.app//?session_code={session_code}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
             
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
             qr.add_data(qr_data)
