@@ -8,3 +8,4 @@ reportlab
 pybase64
 validators
 schedule
+sendgrid
