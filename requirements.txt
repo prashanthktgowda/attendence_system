@@ -1,12 +1,7 @@
 streamlit
 qrcode
 geopy
-fpdf
-pillow
-pyzbar
+pandas
 reportlab
-pybase64
-validators
-schedule
-sendgrid
-streamlit-js-eval
+folium
+streamlit-folium
