@@ -9,3 +9,4 @@ pybase64
 validators
 schedule
 sendgrid
+streamlit-js-eval
