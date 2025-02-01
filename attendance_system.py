@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 import os
+import folium
+from streamlit_folium import folium_static
 
 # Initialize session state
 if "attendance_data" not in st.session_state:
@@ -50,7 +52,7 @@ def teacher_dashboard():
 
         if st.button("Generate QR Code"):
             session_code = f"{subject_name}_{datetime.now().strftime('%Y-%m-%d')}"
-            qr_data = f"https://attendencesystem.streamlit.app//?session_code={session_code}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
+            qr_data = f"https://attendencesystem.streamlit.app/?session_code={session_code}&lat={admin_lat}&lon={admin_lon}&range={attendance_range}"
             
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
             qr.add_data(qr_data)
@@ -68,6 +70,15 @@ def teacher_dashboard():
     if st.session_state.session_active:
         st.image("attendance_qr.png", caption="Scan this QR code to mark attendance")
         st.write("Session Code:", st.session_state.session_code)
+        
+        # Auto-expire session after 1 hour
+        if datetime.now() - st.session_state.session_start_time > timedelta(hours=1):
+            st.session_state.session_active = False
+            st.session_state.session_code = None
+            st.session_state.session_start_time = None
+            st.warning("Session expired automatically after 1 hour.")
+            st.rerun()
+        
         if st.button("End Session"):
             st.session_state.session_active = False
             st.session_state.session_code = None
@@ -79,6 +90,14 @@ def teacher_dashboard():
     if st.button("Fetch Report") and fetch_code in st.session_state.attendance_data:
         df = pd.DataFrame(st.session_state.attendance_data[fetch_code])
         st.dataframe(df)
+        
+        # Generate Heatmap
+        if not df.empty:
+            m = folium.Map(location=[st.session_state.admin_coords[0], st.session_state.admin_coords[1]], zoom_start=15)
+            for _, row in df.iterrows():
+                folium.Marker([row['Latitude'], row['Longitude']], popup=row['Name']).add_to(m)
+            folium_static(m)
+        
     elif fetch_code:
         st.error("No attendance data found for this session.")
 
@@ -94,21 +113,31 @@ def student_interface():
     if session_code and admin_lat and admin_lon and attendance_range:
         st.write("You are accessing the attendance session.")
         admin_coords = (float(admin_lat), float(admin_lon))
-
-        name = st.text_input("Enter Your Name")
-        usn = st.text_input("Enter Your USN")
+        user_lat = st.number_input("Enter Your Latitude", format="%.6f")
+        user_lon = st.number_input("Enter Your Longitude", format="%.6f")
+        user_coords = (user_lat, user_lon)
         
-        if st.button("Confirm Attendance"):
-            if session_code in st.session_state.attendance_data and not any(entry['USN'] == usn for entry in st.session_state.attendance_data[session_code]):
-                st.session_state.attendance_data[session_code].append({
-                    "Name": name,
-                    "USN": usn,
-                    "Time": datetime.now().strftime('%H:%M:%S')
-                })
-                st.success("Attendance Marked Successfully!")
-                st.rerun()
-            else:
-                st.error("You have already marked attendance.")
+        # Check distance
+        distance = geodesic(admin_coords, user_coords).meters
+        if distance <= float(attendance_range):
+            name = st.text_input("Enter Your Name")
+            usn = st.text_input("Enter Your USN")
+            
+            if st.button("Confirm Attendance"):
+                if session_code in st.session_state.attendance_data and not any(entry['USN'] == usn for entry in st.session_state.attendance_data[session_code]):
+                    st.session_state.attendance_data[session_code].append({
+                        "Name": name,
+                        "USN": usn,
+                        "Latitude": user_lat,
+                        "Longitude": user_lon,
+                        "Time": datetime.now().strftime('%H:%M:%S')
+                    })
+                    st.success("Attendance Marked Successfully!")
+                    st.rerun()
+                else:
+                    st.error("You have already marked attendance.")
+        else:
+            st.error("You are not within the allowed range.")
     else:
         st.write("Please scan the QR code provided by your teacher.")
 
