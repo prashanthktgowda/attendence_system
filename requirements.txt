@@ -1,7 +1,0 @@
-streamlit
-qrcode
-geopy
-pandas
-reportlab
-folium
-streamlit-folium
